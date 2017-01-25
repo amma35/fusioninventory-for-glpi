@@ -56,7 +56,8 @@ $pfTaskjob = new PluginFusioninventoryTaskjob();
 
 $params = array(
     "moduletype" => filter_input(INPUT_GET, "moduletype"),
-    "method"     => filter_input(INPUT_GET, "method")
+    "method"     => filter_input(INPUT_GET, "method"),
+    "id"         => filter_input(INPUT_GET, "id"),
 );
 
 $pfTaskjob->ajaxModuleTypesDropdown($params);

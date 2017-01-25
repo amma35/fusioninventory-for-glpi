@@ -392,7 +392,8 @@ class PluginFusioninventoryTaskjobView extends PluginFusioninventoryCommonView {
          "  taskjobs.register_update_items(",
          "     'dropdown_$module_types_dropdown', ",
          "     '".$options['moduletype']."', ",
-         "     '".$this->getBaseUrlFor('fi.job.moduleitems')."' ",
+         "     '".$this->getBaseUrlFor('fi.job.moduleitems')."', ",
+         "     '".$options['id']."' ",
          "  );",
          "</script>"
       ));
@@ -425,15 +426,16 @@ class PluginFusioninventoryTaskjobView extends PluginFusioninventoryCommonView {
       /**
        * get Itemtype choices dropdown
        */
-      $dropdown_rand = $this->showDropdownForItemtype(
+      $dropdown_rand = $this->showDropdownMultipleForItemtype(
          $title,
          $itemtype,
+         $options['id'],
+         $options['moduletype'],
          array('width'=>"95%")
       );
       $item = getItemForItemtype($itemtype);
       $itemtype_name = $item->getTypeName();
-      $item_key_id = $item->getForeignKeyField();
-      $dropdown_rand_id = "dropdown_".$item_key_id . $dropdown_rand;
+      $dropdown_rand_id = "dropdown_".$itemtype . $dropdown_rand;
       echo implode( array("\n",
          "<div class='center' id='add_fusinv_job_item_button'>",
          "<input type='button' class=submit",
@@ -445,13 +447,23 @@ class PluginFusioninventoryTaskjobView extends PluginFusioninventoryCommonView {
       echo Html::scriptBlock(implode("\n",array(
          "$('#add_fusinv_job_item_button').on('click', function() {",
          "  taskjobs.add_item(",
+         "     \"".$this->getBaseUrlFor('fi.ajax') . "/taskjobaddmoduleitems.php"."\", ",
          "     \"$moduletype\", \"$itemtype\", \"$itemtype_name\", \"$dropdown_rand_id\"",
          "  );",
          "});",
       )));
    }
 
-
+   public function ajaxAddModuleItems($options){
+      $item = new $options['itemtype']();
+      $items = array();
+      foreach ($options['item_id'] as $data){
+         if($item->getFromDB($data)){
+            $items[] = array('id' => $data, 'name' => $item->fields['name']);
+         }
+      }
+      return $items;
+   }
 
    /**
     * Get html code for itemtype plus button
@@ -461,7 +473,7 @@ class PluginFusioninventoryTaskjobView extends PluginFusioninventoryCommonView {
     * @param string $method
     * @return string
     */
-   public function getAddItemtypeButton($title, $itemtype, $method) {
+   public function getAddItemtypeButton($title, $itemtype, $method, $id) {
       return
          implode("\n", array(
             "<a ",
@@ -470,7 +482,8 @@ class PluginFusioninventoryTaskjobView extends PluginFusioninventoryCommonView {
             "  onclick='taskjobs.show_moduletypes(",
             "     \"".$this->getBaseUrlFor('fi.job.moduletypes')."\", ",
             "     \"".$itemtype."\",",
-            "     \"".$method."\"",
+            "     \"".$method."\",",
+            "     \"".$id."\"",
             "  )'",
             ">",
             $title,
@@ -590,7 +603,7 @@ class PluginFusioninventoryTaskjobView extends PluginFusioninventoryCommonView {
          echo "<div class='input_wrap split_column tab_bg_4'>";
          echo $this->getAddItemtypeButton(
             __('Targets', 'fusioninventory'),
-            'targets', $this->fields['method']
+            'targets', $this->fields['method'], $this->fields['id']
          );
          //echo "<br/><span class='description' style='font-size:50%;font-style:italic'>";
          echo "<br/><span class='description'>";
@@ -601,7 +614,7 @@ class PluginFusioninventoryTaskjobView extends PluginFusioninventoryCommonView {
          echo "<div class='input_wrap split_column tab_bg_4'>";
          echo $this->getAddItemtypeButton(
             __('Actors', 'fusioninventory'),
-            'actors', $this->fields['method']
+            'actors', $this->fields['method'], $this->fields['id']
          );
          echo "<br/><span class='description'>";
          echo __('The items that should carry out those targets.', 'fusioninventory');
